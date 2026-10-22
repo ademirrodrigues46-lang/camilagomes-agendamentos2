@@ -222,11 +222,12 @@
 <body>
 
   <div class="admin-container">
+    <!-- TELA DE LOGIN -->
     <div id="loginSection">
       <div class="header-logo">
         <i class="fa-solid fa-user-shield"></i>
         <h1 class="title">Painel Administrativo</h1>
-        <p class="subtitle">Área restrita de gestão de agendamentos</p>
+        <p class="subtitle">Autenticação oficial via Firebase</p>
       </div>
 
       <div class="error-msg" id="loginError">E-mail ou senha incorretos!</div>
@@ -255,6 +256,7 @@
       </form>
     </div>
 
+    <!-- PAINEL DE CONTROLE -->
     <div id="dashboardSection" class="dashboard-panel">
       <div class="dash-header">
         <div>
@@ -294,10 +296,11 @@
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs com Auth -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA-0Xh1Z4LliMGpkQNHi-Bf_1xmLYCBhAs",
@@ -310,42 +313,45 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    let adminAuth = {
-      email: 'camila@email.com',
-      password: '123'
-    };
-
-    window.addEventListener('DOMContentLoaded', () => {
-      if (sessionStorage.getItem('cg_admin_logged') === 'true') {
-        showDashboard();
+    // Verificar se já existe uma sessão ativa no Firebase
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        showDashboard(user.email);
+      } else {
+        document.getElementById('dashboardSection').style.display = 'none';
+        document.getElementById('loginSection').style.display = 'block';
       }
     });
 
-    window.handleLogin = function(e) {
+    window.handleLogin = async function(e) {
       e.preventDefault();
       const email = document.getElementById('adminEmail').value.trim();
       const pass = document.getElementById('adminPassword').value.trim();
+      const errorMsg = document.getElementById('loginError');
 
-      if (email === adminAuth.email && pass === adminAuth.password) {
-        sessionStorage.setItem('cg_admin_logged', 'true');
-        document.getElementById('loginError').style.display = 'none';
-        showDashboard();
-      } else {
-        document.getElementById('loginError').style.display = 'block';
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        errorMsg.style.display = 'none';
+      } catch (error) {
+        errorMsg.style.display = 'block';
+        errorMsg.innerText = "E-mail ou senha inválidos!";
       }
     }
 
-    window.handleLogout = function() {
-      sessionStorage.removeItem('cg_admin_logged');
-      document.getElementById('dashboardSection').style.display = 'none';
-      document.getElementById('loginSection').style.display = 'block';
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.log(e);
+      }
     }
 
-    async function showDashboard() {
+    async function showDashboard(email) {
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('dashboardSection').style.display = 'block';
-      document.getElementById('welcomeUser').innerText = `Logado como: ${adminAuth.email}`;
+      document.getElementById('welcomeUser').innerText = `Logado como: ${email}`;
 
       try {
         const querySnapshot = await getDocs(collection(db, "settings"));
