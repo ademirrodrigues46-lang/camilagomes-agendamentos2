@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo • Camila Gomes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #0D0B12;
+      --card-bg: #161220;
+      --card-border: #2A213B;
+      --primary-purple: #9D4EDD;
+      --primary-glow: rgba(157, 78, 221, 0.4);
+      --accent-lilac: #E0AAFF;
+      --text-white: #FFFFFF;
+      --text-muted: #A093B5;
+      --danger: #FF5252;
+      --success: #00E676;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .admin-container {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 32px 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .header-logo {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header-logo i {
+      font-size: 40px;
+      color: var(--primary-purple);
+      margin-bottom: 12px;
+      text-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-white);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-lilac);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 14px 12px 40px;
+      color: var(--text-white);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary-purple);
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #A855F7 0%, #7E22CE 100%);
+      color: #FFFFFF;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      box-shadow: 0 4px 20px var(--primary-glow);
+      transition: opacity 0.2s;
+    }
+
+    .primary-btn:hover {
+      opacity: 0.9;
+    }
+
+    .error-msg {
+      background: rgba(255, 82, 82, 0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-bottom: 16px;
+      display: none;
+      text-align: center;
+    }
+
+    /* PAINEL DE GESTÃO QUANDO LOGADO */
+    .dashboard-panel {
+      display: none;
+    }
+
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--danger);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .booking-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      padding: 14px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .booking-info {
+      font-size: 13px;
+    }
+
+    .booking-service {
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 2px;
+    }
+
+    .booking-client {
+      color: var(--accent-lilac);
+      font-size: 12px;
+    }
+
+    .booking-date {
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .delete-btn {
+      background: rgba(255, 82, 82, 0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: var(--danger);
+      color: #FFF;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-container">
+    <!-- TELA DE LOGIN -->
+    <div id="loginSection">
+      <div class="header-logo">
+        <i class="fa-solid fa-user-shield"></i>
+        <h1 class="title">Painel Administrativo</h1>
+        <p class="subtitle">Área restrita de gestão de agendamentos</p>
+      </div>
+
+      <div class="error-msg" id="loginError">E-mail ou senha incorretos!</div>
+
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">E-mail de Acesso</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="adminEmail" class="form-input" placeholder="seuemail@exemplo.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-key"></i>
+            <input type="password" id="adminPassword" class="form-input" placeholder="••••••••" required>
+          </div>
+        </div>
+
+        <button type="submit" class="primary-btn">
+          <span>Acessar Painel</span>
+          <i class="fa-solid fa-right-to-bracket"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- TELA DO PAINEL DE CONTROLE (PÓS-LOGIN) -->
+    <div id="dashboardSection" class="dashboard-panel">
+      <div class="dash-header">
+        <div>
+          <h2 style="font-size: 18px; font-weight: 800;">Gestão da Agenda</h2>
+          <p style="font-size: 12px; color: var(--text-muted);" id="welcomeUser"></p>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Sair</button>
+      </div>
+
+      <!-- CONFIGURAÇÕES DE WHATSAPP E PIX -->
+      <div style="margin-bottom: 24px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 14px; border: 1px solid var(--card-border);">
+        <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--accent-lilac);"><i class="fa-solid fa-gear"></i> Configurações do App</h3>
+        
+        <div class="form-group">
+          <label class="form-label" style="font-size: 10px;">WhatsApp para Receber Agendamentos</label>
+          <input type="text" id="cfgPhone" class="form-input" style="padding-left: 14px;" placeholder="Ex: 5586999999999">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" style="font-size: 10px;">Chave PIX do Sinal</label>
+          <input type="text" id="cfgPix" class="form-input" style="padding-left: 14px;" placeholder="Ex: camila@pix.com.br">
+        </div>
+
+        <button class="primary-btn" onclick="saveSettings()" style="margin-top: 8px; padding: 10px; font-size: 12px;">Salvar Alterações</button>
+      </div>
+
+      <!-- LISTA DE HORÁRIOS AGENDADOS -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 14px; font-weight: 700;">Horários Reservados</span>
+        <span style="font-size: 11px; color: var(--danger); cursor: pointer; font-weight: 600;" onclick="clearAllBookings()">Limpar Todos</span>
+      </div>
+
+      <div id="adminBookingsList" style="max-height: 250px; overflow-y: auto;">
+        <!-- Injetado dinamicamente via JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DADOS DE ACESSO DEFAULT (Salvos no localStorage)
+    let adminAuth = JSON.parse(localStorage.getItem('cg_admin_auth')) || {
+      email: 'camila@email.com',
+      password: '123'
+    };
+
+    let appSettings = JSON.parse(localStorage.getItem('cg_settings')) || {
+      phone: '5586999999999',
+      pix: 'camilagomes@pix.com.br'
+    };
+
+    // VERIFICAR SESSÃO AO CARREGAR
+    document.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem('cg_admin_logged') === 'true') {
+        showDashboard();
+      }
+    });
+
+    // AUTENTICAÇÃO DE LOGIN
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const pass = document.getElementById('adminPassword').value.trim();
+
+      if (email === adminAuth.email && pass === adminAuth.password) {
+        sessionStorage.setItem('cg_admin_logged', 'true');
+        document.getElementById('loginError').style.display = 'none';
+        showDashboard();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem('cg_admin_logged');
+      document.getElementById('dashboardSection').style.display = 'none';
+      document.getElementById('loginSection').style.display = 'block';
+    }
+
+    // EXIBIR TELA DO PAINEL PÓS-LOGIN
+    function showDashboard() {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('dashboardSection').style.display = 'block';
+      document.getElementById('welcomeUser').innerText = `Logado como: ${adminAuth.email}`;
+
+      document.getElementById('cfgPhone').value = appSettings.phone;
+      document.getElementById('cfgPix').value = appSettings.pix;
+
+      renderBookings();
+    }
+
+    // SALVAR CONFIGURAÇÕES DO WHATSAPP / PIX
+    function saveSettings() {
+      appSettings.phone = document.getElementById('cfgPhone').value.trim() || '5586999999999';
+      appSettings.pix = document.getElementById('cfgPix').value.trim() || 'camilagomes@pix.com.br';
+
+      localStorage.setItem('cg_settings', JSON.stringify(appSettings));
+      alert('Configurações salvas com sucesso!');
+    }
+
+    // RENDERIZAR LISTA DE AGENDAMENTOS
+    function renderBookings() {
+      const bookings = JSON.parse(localStorage.getItem('cg_bookings') || '[]');
+      const container = document.getElementById('adminBookingsList');
+
+      if (bookings.length === 0) {
+        container.innerHTML = `<p style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px;">Nenhum horário reservado no momento.</p>`;
+      } else {
+        container.innerHTML = bookings.map(b => `
+          <div class="booking-card">
+            <div class="booking-info">
+              <div class="booking-service">${b.service}</div>
+              <div class="booking-client">👤 ${b.clientName} (${b.clientPhone})</div>
+              <div class="booking-date">📅 ${b.date.split('-').reverse().join('/')} às ⏰ ${b.time}</div>
+            </div>
+            <button class="delete-btn" onclick="deleteBooking(${b.id})" title="Liberar Horário Cancelado">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        `).join('');
+      }
+    }
+
+    // LIBERAR / CANCELAR UM HORÁRIO ESPECÍFICO
+    function deleteBooking(id) {
+      if (confirm('Deseja liberar este horário cancelado para que novos clientes possam agendar?')) {
+        let bookings = JSON.parse(localStorage.getItem('cg_bookings') || '[]');
+        bookings = bookings.filter(b => b.id !== id);
+        localStorage.setItem('cg_bookings', JSON.stringify(bookings));
+        renderBookings();
+      }
+    }
+
+    // LIMPAR TODOS OS AGENDAMENTOS
+    function clearAllBookings() {
+      if (confirm('Tem certeza que deseja apagar TODOS os agendamentos e liberar a agenda inteira?')) {
+        localStorage.removeItem('cg_bookings');
+        renderBookings();
+      }
+    }
+  </script>
+</body>
+</html>
