@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* PALETA TEMA BLACK / LILÁS */
     :root {
       --bg-dark: #0D0B12;
       --card-bg: #161220;
@@ -91,7 +90,6 @@
       box-shadow: 0 0 8px var(--primary-purple);
     }
 
-    /* BOTÃO DO CADEADO PARA ADMIN */
     .admin-link-btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -501,14 +499,12 @@
 <body>
 
   <div class="app-container">
-    <!-- CABEÇALHO DO PERFIL -->
     <header class="profile-header">
       <div class="top-badge-row">
         <div class="status-pill">
           <span class="status-dot"></span>
           AGENDA ABERTA • BLOQUEIO ONLINE
         </div>
-        <!-- BOTÃO DO CADEADO DIRECIONANDO PARA O ADMIN.HTML -->
         <a href="admin.html" class="admin-link-btn" title="Acessar Painel Administrativo">
           <i class="fa-solid fa-lock"></i>
         </a>
@@ -526,12 +522,8 @@
       </div>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="main-content" id="appBody">
-      <!-- Inserido dinamicamente via JS -->
-    </main>
+    <main class="main-content" id="appBody"></main>
 
-    <!-- BARRA INFERIOR DE NAVEGAÇÃO -->
     <nav class="bottom-nav">
       <div class="nav-item active" onclick="showHome()">
         <i class="fa-solid fa-house"></i>
@@ -544,7 +536,6 @@
     </nav>
   </div>
 
-  <!-- MODAL DE AGENDAMENTO DA CLIENTE -->
   <div class="modal-overlay" id="bookingModal">
     <div class="modal-container">
       <div class="modal-header">
@@ -581,7 +572,6 @@
     </div>
   </div>
 
-  <!-- MODAL RESUMO E ENVIAR WHATSAPP -->
   <div class="modal-overlay" id="summaryModal">
     <div class="modal-container">
       <div class="modal-header">
@@ -605,7 +595,23 @@
     </div>
   </div>
 
-  <script>
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-0Xh1Z4LliMGpkQNHi-Bf_1xmLYCBhAs",
+      authDomain: "agendamento-camila2.firebaseapp.com",
+      projectId: "agendamento-camila2",
+      storageBucket: "agendamento-camila2.firebasestorage.app",
+      messagingSenderId: "1081533838664",
+      appId: "1:1081533838664:web:d07adf41730784d8a86f7d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const servicesByCategory = {
       socialmedia: {
         title: 'Social Media',
@@ -659,15 +665,24 @@
     let selectedTime = '';
     let currentBookingData = null;
 
-    let appSettings = JSON.parse(localStorage.getItem('cg_settings')) || {
+    let appSettings = {
       phone: '5586999999999',
       pix: 'camilagomes@pix.com.br'
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('bookingDate').min = today;
       document.getElementById('bookingDate').value = today;
+      
+      // Buscar configurações do Firestore se houver
+      try {
+        const querySnapshot = await getDocs(collection(db, "settings"));
+        querySnapshot.forEach((doc) => {
+          appSettings = doc.data();
+        });
+      } catch(e) { console.log(e); }
+
       updateDirectWhatsappLink();
       showHome();
     });
@@ -676,7 +691,7 @@
       document.getElementById('directWhatsappNav').href = `https://wa.me/${appSettings.phone}`;
     }
 
-    function showHome() {
+    window.showHome = function() {
       const appBody = document.getElementById('appBody');
       appBody.innerHTML = `
         <div class="section-title">
@@ -720,7 +735,7 @@
       `;
     }
 
-    function openCategoryView(catKey) {
+    window.openCategoryView = function(catKey) {
       const catData = servicesByCategory[catKey];
       selectedCategory = catData.title;
 
@@ -752,25 +767,34 @@
       `;
     }
 
-    function openBookingModal(serviceTitle) {
+    window.openBookingModal = function(serviceTitle) {
       selectedService = serviceTitle;
       document.getElementById('modalServiceTitle').innerText = serviceTitle;
-      renderTimeSlots();
+      window.renderTimeSlots();
       document.getElementById('bookingModal').classList.add('active');
     }
 
-    function closeBookingModal() {
+    window.closeBookingModal = function() {
       document.getElementById('bookingModal').classList.remove('active');
     }
 
-    function renderTimeSlots() {
+    window.renderTimeSlots = async function() {
       const date = document.getElementById('bookingDate').value;
       const grid = document.getElementById('timeGrid');
-      grid.innerHTML = '';
+      grid.innerHTML = 'Carregando...';
       selectedTime = '';
 
-      const booked = getBookedSlots(date);
+      // Buscar horários ocupados do Firebase
+      let booked = [];
+      try {
+        const q = query(collection(db, "bookings"), where("date", "==", date));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          booked.push(doc.data().time);
+        });
+      } catch(e) { console.log(e); }
 
+      grid.innerHTML = '';
       timeSlotsAvailable.forEach(slot => {
         const isBooked = booked.includes(slot);
         const chip = document.createElement('div');
@@ -788,12 +812,7 @@
       });
     }
 
-    function getBookedSlots(date) {
-      const all = JSON.parse(localStorage.getItem('cg_bookings') || '[]');
-      return all.filter(b => b.date === date).map(b => b.time);
-    }
-
-    function handleBookingSubmit(e) {
+    window.handleBookingSubmit = async function(e) {
       e.preventDefault();
       if (!selectedTime) {
         alert('Por favor, selecione um horário disponível!');
@@ -805,20 +824,23 @@
       const date = document.getElementById('bookingDate').value;
 
       currentBookingData = {
-        id: Date.now(),
         service: selectedService,
         category: selectedCategory,
         clientName: name,
         clientPhone: phone,
         date: date,
-        time: selectedTime
+        time: selectedTime,
+        createdAt: Date.now()
       };
 
-      const existing = JSON.parse(localStorage.getItem('cg_bookings') || '[]');
-      existing.push(currentBookingData);
-      localStorage.setItem('cg_bookings', JSON.stringify(existing));
+      try {
+        await addDoc(collection(db, "bookings"), currentBookingData);
+      } catch(err) {
+        alert("Erro ao salvar agendamento. Verifique sua conexão.");
+        return;
+      }
 
-      closeBookingModal();
+      window.closeBookingModal();
 
       const summaryDetails = document.getElementById('summaryDetails');
       summaryDetails.innerHTML = `
@@ -832,12 +854,12 @@
       document.getElementById('summaryModal').classList.add('active');
     }
 
-    function closeSummaryModal() {
+    window.closeSummaryModal = function() {
       document.getElementById('summaryModal').classList.remove('active');
       showHome();
     }
 
-    function sendToWhatsApp() {
+    window.sendToWhatsApp = function() {
       if (!currentBookingData) return;
 
       const message = `Olá Camila! Gostaria de agendar/confirmar o seguinte serviço:\n\n` +
@@ -850,7 +872,7 @@
 
       const encoded = encodeURIComponent(message);
       window.open(`https://wa.me/${appSettings.phone}?text=${encoded}`, '_blank');
-      closeSummaryModal();
+      window.closeSummaryModal();
     }
   </script>
 </body>

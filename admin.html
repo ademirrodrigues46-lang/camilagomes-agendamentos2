@@ -130,11 +130,6 @@
       gap: 8px;
       margin-top: 20px;
       box-shadow: 0 4px 20px var(--primary-glow);
-      transition: opacity 0.2s;
-    }
-
-    .primary-btn:hover {
-      opacity: 0.9;
     }
 
     .error-msg {
@@ -149,7 +144,6 @@
       text-align: center;
     }
 
-    /* PAINEL DE GESTÃO QUANDO LOGADO */
     .dashboard-panel {
       display: none;
     }
@@ -217,7 +211,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
     }
 
     .delete-btn:hover {
@@ -229,7 +222,6 @@
 <body>
 
   <div class="admin-container">
-    <!-- TELA DE LOGIN -->
     <div id="loginSection">
       <div class="header-logo">
         <i class="fa-solid fa-user-shield"></i>
@@ -263,7 +255,6 @@
       </form>
     </div>
 
-    <!-- TELA DO PAINEL DE CONTROLE (PÓS-LOGIN) -->
     <div id="dashboardSection" class="dashboard-panel">
       <div class="dash-header">
         <div>
@@ -273,7 +264,6 @@
         <button class="logout-btn" onclick="handleLogout()"><i class="fa-solid fa-power-off"></i> Sair</button>
       </div>
 
-      <!-- CONFIGURAÇÕES DE WHATSAPP E PIX -->
       <div style="margin-bottom: 24px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 14px; border: 1px solid var(--card-border);">
         <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--accent-lilac);"><i class="fa-solid fa-gear"></i> Configurações do App</h3>
         
@@ -290,39 +280,49 @@
         <button class="primary-btn" onclick="saveSettings()" style="margin-top: 8px; padding: 10px; font-size: 12px;">Salvar Alterações</button>
       </div>
 
-      <!-- LISTA DE HORÁRIOS AGENDADOS -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <span style="font-size: 14px; font-weight: 700;">Horários Reservados</span>
-        <span style="font-size: 11px; color: var(--danger); cursor: pointer; font-weight: 600;" onclick="clearAllBookings()">Limpar Todos</span>
+        <span style="font-size: 14px; font-weight: 700;">Horários Reservados na Nuvem</span>
       </div>
 
       <div id="adminBookingsList" style="max-height: 250px; overflow-y: auto;">
-        <!-- Injetado dinamicamente via JS -->
+        Carregando agendamentos...
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <a href="index.html" style="color: var(--accent-lilac); font-size: 12px; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i> Voltar para o Site Principal</a>
       </div>
     </div>
   </div>
 
-  <script>
-    // DADOS DE ACESSO DEFAULT (Salvos no localStorage)
-    let adminAuth = JSON.parse(localStorage.getItem('cg_admin_auth')) || {
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-0Xh1Z4LliMGpkQNHi-Bf_1xmLYCBhAs",
+      authDomain: "agendamento-camila2.firebaseapp.com",
+      projectId: "agendamento-camila2",
+      storageBucket: "agendamento-camila2.firebasestorage.app",
+      messagingSenderId: "1081533838664",
+      appId: "1:1081533838664:web:d07adf41730784d8a86f7d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let adminAuth = {
       email: 'camila@email.com',
       password: '123'
     };
 
-    let appSettings = JSON.parse(localStorage.getItem('cg_settings')) || {
-      phone: '5586999999999',
-      pix: 'camilagomes@pix.com.br'
-    };
-
-    // VERIFICAR SESSÃO AO CARREGAR
-    document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', () => {
       if (sessionStorage.getItem('cg_admin_logged') === 'true') {
         showDashboard();
       }
     });
 
-    // AUTENTICAÇÃO DE LOGIN
-    function handleLogin(e) {
+    window.handleLogin = function(e) {
       e.preventDefault();
       const email = document.getElementById('adminEmail').value.trim();
       const pass = document.getElementById('adminPassword').value.trim();
@@ -336,71 +336,81 @@
       }
     }
 
-    function handleLogout() {
+    window.handleLogout = function() {
       sessionStorage.removeItem('cg_admin_logged');
       document.getElementById('dashboardSection').style.display = 'none';
       document.getElementById('loginSection').style.display = 'block';
     }
 
-    // EXIBIR TELA DO PAINEL PÓS-LOGIN
-    function showDashboard() {
+    async function showDashboard() {
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('dashboardSection').style.display = 'block';
       document.getElementById('welcomeUser').innerText = `Logado como: ${adminAuth.email}`;
 
-      document.getElementById('cfgPhone').value = appSettings.phone;
-      document.getElementById('cfgPix').value = appSettings.pix;
+      try {
+        const querySnapshot = await getDocs(collection(db, "settings"));
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          document.getElementById('cfgPhone').value = data.phone || '5586999999999';
+          document.getElementById('cfgPix').value = data.pix || 'camilagomes@pix.com.br';
+        });
+      } catch(e) { console.log(e); }
 
       renderBookings();
     }
 
-    // SALVAR CONFIGURAÇÕES DO WHATSAPP / PIX
-    function saveSettings() {
-      appSettings.phone = document.getElementById('cfgPhone').value.trim() || '5586999999999';
-      appSettings.pix = document.getElementById('cfgPix').value.trim() || 'camilagomes@pix.com.br';
+    window.saveSettings = async function() {
+      const phone = document.getElementById('cfgPhone').value.trim() || '5586999999999';
+      const pix = document.getElementById('cfgPix').value.trim() || 'camilagomes@pix.com.br';
 
-      localStorage.setItem('cg_settings', JSON.stringify(appSettings));
-      alert('Configurações salvas com sucesso!');
+      try {
+        await setDoc(doc(db, "settings", "main"), { phone, pix });
+        alert('Configurações salvas no Firebase com sucesso!');
+      } catch(e) {
+        alert('Erro ao salvar configurações.');
+      }
     }
 
-    // RENDERIZAR LISTA DE AGENDAMENTOS
-    function renderBookings() {
-      const bookings = JSON.parse(localStorage.getItem('cg_bookings') || '[]');
+    async function renderBookings() {
       const container = document.getElementById('adminBookingsList');
+      container.innerHTML = "Carregando...";
 
-      if (bookings.length === 0) {
-        container.innerHTML = `<p style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px;">Nenhum horário reservado no momento.</p>`;
-      } else {
-        container.innerHTML = bookings.map(b => `
-          <div class="booking-card">
-            <div class="booking-info">
-              <div class="booking-service">${b.service}</div>
-              <div class="booking-client">👤 ${b.clientName} (${b.clientPhone})</div>
-              <div class="booking-date">📅 ${b.date.split('-').reverse().join('/')} às ⏰ ${b.time}</div>
+      try {
+        const querySnapshot = await getDocs(collection(db, "bookings"));
+        let bookings = [];
+        querySnapshot.forEach((docSnap) => {
+          bookings.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        if (bookings.length === 0) {
+          container.innerHTML = `<p style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px;">Nenhum horário reservado no momento.</p>`;
+        } else {
+          container.innerHTML = bookings.map(b => `
+            <div class="booking-card">
+              <div class="booking-info">
+                <div class="booking-service">${b.service}</div>
+                <div class="booking-client">👤 ${b.clientName} (${b.clientPhone})</div>
+                <div class="booking-date">📅 ${b.date.split('-').reverse().join('/')} às ⏰ ${b.time}</div>
+              </div>
+              <button class="delete-btn" onclick="deleteBooking('${b.id}')" title="Liberar Horário Cancelado">
+                <i class="fa-solid fa-trash"></i>
+              </button>
             </div>
-            <button class="delete-btn" onclick="deleteBooking(${b.id})" title="Liberar Horário Cancelado">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
-        `).join('');
+          `).join('');
+        }
+      } catch(e) {
+        container.innerHTML = `<p style="font-size: 12px; color: var(--danger); text-align: center;">Erro ao carregar dados do Firebase.</p>`;
       }
     }
 
-    // LIBERAR / CANCELAR UM HORÁRIO ESPECÍFICO
-    function deleteBooking(id) {
+    window.deleteBooking = async function(id) {
       if (confirm('Deseja liberar este horário cancelado para que novos clientes possam agendar?')) {
-        let bookings = JSON.parse(localStorage.getItem('cg_bookings') || '[]');
-        bookings = bookings.filter(b => b.id !== id);
-        localStorage.setItem('cg_bookings', JSON.stringify(bookings));
-        renderBookings();
-      }
-    }
-
-    // LIMPAR TODOS OS AGENDAMENTOS
-    function clearAllBookings() {
-      if (confirm('Tem certeza que deseja apagar TODOS os agendamentos e liberar a agenda inteira?')) {
-        localStorage.removeItem('cg_bookings');
-        renderBookings();
+        try {
+          await deleteDoc(doc(db, "bookings", id));
+          renderBookings();
+        } catch(e) {
+          alert('Erro ao excluir agendamento.');
+        }
       }
     }
   </script>
